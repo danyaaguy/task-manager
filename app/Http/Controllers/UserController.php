@@ -16,7 +16,7 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         $users = User::all();
-        return response()->json($users);
+        return response()->json($users, 200);
     }
 
     /**
@@ -27,7 +27,10 @@ class UserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $user = User::create($request->validate(['name' => 'required', 'email' => 'required|email|unique:users']));
+        $user = User::create($request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users'
+        ]));
         return response()->json($user, 201);
     }
 
@@ -40,8 +43,11 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): JsonResponse
     {
-        $user->update($request->validate(['name' => 'string', 'email' => 'email']));
-        return response()->json($user);
+        $user->update($request->validate([
+            'name' => 'string',
+            'email' => 'email'
+        ]));
+        return response()->json($user, 200);
     }
 
     /**
@@ -53,6 +59,6 @@ class UserController extends Controller
     public function destroy(User $user): JsonResponse
     {
         $user->delete();
-        return response()->json(null, 204);
+        return response()->json(null, 200);
     }
 }

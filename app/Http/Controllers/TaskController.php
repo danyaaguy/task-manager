@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use App\Jobs\AssignTask;
 
 class TaskController extends Controller
 {
@@ -18,7 +19,7 @@ class TaskController extends Controller
     public function index(): JsonResponse
     {
         $tasks = Task::with('user')->get();
-        return response()->json($tasks);
+        return response()->json($tasks, 200);
     }
 
     /**
@@ -39,16 +40,13 @@ class TaskController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user = User::find($request->user_id);
-
-        if (!$user) {
-            return response()->json(['message' => 'Сотрудник не найден.'], 404);
-        }
-
         $task = Task::create([
             'title' => $request->title,
             'description' => $request->description,
         ]);
+
+        // Задание на назначение свободного сотрудника через 5 минут (300 секунд)  
+        AssignTask::dispatch($task)->delay(now()->addMinutes(5));
 
         return response()->json(['task' => $task, 'message' => 'Задача успешно создана.'], 201);
     }
@@ -62,8 +60,11 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task): JsonResponse
     {
-        $task->update($request->validate(['title' => 'string', 'description' => 'nullable|string', 'assigned_to' => 'nullable|exists:users,id']));
-        return response()->json($task);
+        $task->update($request->validate([
+            'title' => 'string',
+            'description' => 'nullable|string'
+        ]));
+        return response()->json($task, 200);
     }
 
     /**
@@ -75,7 +76,7 @@ class TaskController extends Controller
     public function destroy(Task $task): JsonResponse
     {
         $task->delete();
-        return response()->json(null, 204);
+        return response()->json(null, 200);
     }
 
     /**
@@ -91,7 +92,7 @@ class TaskController extends Controller
         $task = Task::findOrFail($taskId);
         $task->users()->attach($userId);
 
-        return response()->json($task->load('users'));
+        return response()->json($task->load('users'), 200);
     }
 
     /**
@@ -107,6 +108,6 @@ class TaskController extends Controller
         $task = Task::findOrFail($taskId);
         $task->users()->detach($userId);
 
-        return response()->json($task->load('users')); // Возвращаем обновлённую задачу с пользователями  
+        return response()->json($task->load('users'), 200);
     }
 }
