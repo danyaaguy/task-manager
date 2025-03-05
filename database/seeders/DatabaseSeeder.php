@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Task;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -18,6 +19,13 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => bcrypt('123456')
         ]);
+
+        // Создаем 20 пользователей  
+        User::factory(20)->create();
+
+        // Создаем 200 задач, привязывая их к существующим пользователям  
+        Task::factory(200)->create();
     }
 }
