@@ -22,8 +22,7 @@ class TaskFactory extends Factory
         return [  
             'title' => fake()->sentence(),  
             'description' => fake()->paragraph(),  
-            'status' => $status,  
-            'user_id' => User::inRandomOrder()->first()->id,  
+            'status' => $status,
         ]; 
     }
 }

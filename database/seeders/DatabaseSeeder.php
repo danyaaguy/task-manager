@@ -25,7 +25,14 @@ class DatabaseSeeder extends Seeder
         // Создаем 20 пользователей  
         User::factory(20)->create();
 
-        // Создаем 200 задач, привязывая их к существующим пользователям  
+        // Создаем 200 задач
         Task::factory(200)->create();
+
+        // Привязываем задачи к случайным пользователям  
+        foreach (Task::all() as $task) {
+            $user = User::where('status', 1)->inRandomOrder()->first();
+
+            $task->users()->attach($user->id);
+        }
     }
 }
