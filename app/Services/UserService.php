@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\Role;
 
 class UserService
 {
@@ -19,5 +20,13 @@ class UserService
         }
 
         return $query->get();
+    }
+
+    public function assignRole($roleId, $userId)
+    {
+        $user = User::findOrFail($userId);
+        $role = Role::findOrFail($roleId);
+
+        $user->roles()->attach($role);
     }
 }
