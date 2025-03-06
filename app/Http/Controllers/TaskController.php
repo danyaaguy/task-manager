@@ -6,7 +6,6 @@ use App\Services\TaskService;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Validator;
 use App\Jobs\AssignTask;
 
 class TaskController extends Controller
@@ -50,7 +49,7 @@ class TaskController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([  
+        $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
@@ -82,7 +81,12 @@ class TaskController extends Controller
             'status' => 'integer|in:0,1,2',
         ]);
 
+        $oldStatus = $task->status;
+
         $task->update($data);
+
+        $this->taskService->statusNotification($oldStatus, $task);
+
         return response()->json($task, 200);
     }
 

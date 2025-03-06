@@ -10,7 +10,7 @@ Route::middleware(['auth:sanctum'])->group(function ()
 {
     Route::post('tasks', [TaskController::class, 'store'])->middleware(['trottle:tasks']);
     
-    Route::post('tasks/{task}/assign', [TaskController::class, 'assign']);  
+    Route::post('tasks/{task}/assign/{user}', [TaskController::class, 'assign']);  
     Route::delete('tasks/{task}/unassign/{user}', [TaskController::class, 'unassign']);  
     
     Route::resource('users', UserController::class);
