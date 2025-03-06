@@ -2,20 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private UserService $userService,
+    ) {}
+
     /**
      * Display a listing of the users.
      *
      * @return JsonResponse
      */
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        $users = User::all();
+        $request->validate([
+            'status' => 'integer|in:0,1',
+            'sort_by' => 'string',
+            'sort_direction' => 'string|in:asc,desc',
+        ]);
+
+        $filters = [
+            'status' => $request->input('status'),
+        ];
+
+        $sortBy = $request->input('sort_by');
+        $sortDirection = $request->input('sort_direction', 'asc');
+
+        $users = $this->userService->getUsers($filters, $sortBy, $sortDirection);
+
         return response()->json($users, 200);
     }
 
@@ -27,10 +46,13 @@ class UserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $user = User::create($request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users'
-        ]));
+        $data = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:8',
+            'status' => 'integer|in:0,1',
+        ]);
+        $user = User::create($data);
         return response()->json($user, 201);
     }
 
@@ -43,10 +65,13 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user): JsonResponse
     {
-        $user->update($request->validate([
+        $data = $request->validate([
             'name' => 'string',
-            'email' => 'email'
-        ]));
+            'email' => 'email|unique:users',
+            'password' => 'string|min:8',
+            'status' => 'integer|in:0,1',
+        ]);
+        $user->update($data);
         return response()->json($user, 200);
     }
 

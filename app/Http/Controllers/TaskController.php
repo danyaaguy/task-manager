@@ -2,23 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TaskService;
 use Illuminate\Http\Request;
 use App\Models\Task;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use App\Jobs\AssignTask;
 
 class TaskController extends Controller
 {
+    public function __construct(
+        private TaskService $taskService,
+    ) {}
+
     /**
      * Display a listing of the tasks.
      *
      * @return JsonResponse
      */
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        $tasks = Task::with('user')->get();
+        $request->validate([
+            'status' => 'integer|in:0,1,2',
+            'sort_by' => 'string',
+            'sort_direction' => 'string|in:asc,desc',
+            'start_date' => 'date',
+            'end_date' => 'date|after_or_equal:start_date',
+        ]);
+
+        $filters = [
+            'status' => $request->input('status'),
+        ];
+
+        $sortBy = $request->input('sort_by');
+        $sortDirection = $request->input('sort_direction', 'asc');
+
+        $tasks = $this->taskService->getTasks($filters, $sortBy, $sortDirection);
+
         return response()->json($tasks, 200);
     }
 
@@ -30,15 +50,11 @@ class TaskController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([  
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
 
         $task = Task::create([
             'title' => $request->title,
@@ -60,10 +76,13 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task): JsonResponse
     {
-        $task->update($request->validate([
+        $data = $request->validate([
             'title' => 'string',
-            'description' => 'nullable|string'
-        ]));
+            'description' => 'string',
+            'status' => 'integer|in:0,1,2',
+        ]);
+
+        $task->update($data);
         return response()->json($task, 200);
     }
 
