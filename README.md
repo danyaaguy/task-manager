@@ -39,6 +39,6 @@
 ### Дополнительная информация
 
 - Для группировки по статусу и фильтрации используется [Abbasudo\Purity](https://github.com/abbasudo/laravel-purity).
-- Для ролей используется [Spatie\ModelStates](https://github.com/spatie/model-states).
+- Для ролей используется [Spatie\LaravelPermission](https://spatie.be/docs/laravel-permission).
 - Для DTO используется [Spatie\LaravelData](https://github.com/spatie/laravel-data).
 - Для управления state в моделях используется [Spatie\ModelStates](https://spatie.be/docs/laravel-model-states).
