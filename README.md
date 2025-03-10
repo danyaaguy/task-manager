@@ -4,7 +4,7 @@
 
 1. **Сборка контейнеров**:
    ```bash
-   docker-compose up --build
+   ./vendor/bin/sail up
    ```
 
 2. **Миграция базы данных**:
@@ -18,7 +18,7 @@
     ```
 
 2. **Доступ к API**:
-   После успешного запуска приложение будет доступно по адресу [http://localhost](http://localhost).
+   После успешного запуска приложение будет доступно по адресу [http://localhost/api](http://localhost/api).
 
 ## Использование API
 
@@ -35,15 +35,10 @@
 - **Получить все задачи**: `GET /tasks`
 - **Обновить задачу**: `PUT /tasks/{id}`
 - **Удалить задачу**: `DELETE /tasks/{id}`
-- **Присвоить задачу сотруднику**: `POST /tasks/{task}/assign/{user}`
-- **Отменить присвоение задачи сотруднику**: `DELETE /tasks/{task}/unassign/{user}`
 
 ### Дополнительная информация
 
-- Группировка по статусу и фильтрация доступна через query параметры в запросах: `status`, `sort_by` и `sort_direction`.
-- Для выбора отрезка даты задач можно использовать query параметры: `start_date` и `end_date`.
-- Роли сотрудников могут быть присвоены сотрудникам с помощью метода `assignRole`.
-- Если задача не назначена на конкретного сотрудника, сотрудник будет выбран автоматически, через 5 минут (300 секунд) после создания задачи.
-
-
-Для доступа к API требуется аутентификация [http://localhost/login](http://localhost/login) используйте test@example.com и 12345678.
+- Для группировки по статусу и фильтрации используется [Abbasudo\Purity](https://github.com/abbasudo/laravel-purity).
+- Для ролей используется [Spatie\ModelStates](https://github.com/spatie/model-states).
+- Для DTO используется [Spatie\LaravelData](https://github.com/spatie/laravel-data).
+- Для управления state в моделях используется [Spatie\ModelStates](https://spatie.be/docs/laravel-model-states).
