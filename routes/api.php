@@ -1,18 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\TaskController;
+/**
+ *  Преимущества:
+ *  Можно точно указать, какой HTTP-метод (GET, POST, PUT, DELETE) соответствует какому методу контроллера и зарегистрировать только необходимые.
+ *  Проще применять разные middleware к отдельным маршрутам и именовать их.
+ *  Более ясный подход.
+ */
 
-// Методы для авторизованных пользователей
-Route::middleware(['auth:sanctum'])->group(function ()
-{
-    Route::post('tasks', [TaskController::class, 'store'])->middleware(['trottle:tasks']);
-    
-    Route::post('tasks/{task}/assign/{user}', [TaskController::class, 'assign']);  
-    Route::delete('tasks/{task}/unassign/{user}', [TaskController::class, 'unassign']);  
-    
-    Route::resource('users', UserController::class);
-    Route::resource('tasks', TaskController::class);
-});
+require __DIR__ . '/api/users.php';
+require __DIR__ . '/api/tasks.php';

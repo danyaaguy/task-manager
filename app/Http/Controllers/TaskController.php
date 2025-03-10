@@ -2,91 +2,66 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\TaskService;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
-use App\Jobs\AssignTask;
+use App\Http\Resources\ApiResource;
+use App\Http\Resources\TaskResource;
+use App\Http\Requests\StoreTaskRequest;
+use App\Http\Requests\UpdateTaskRequest;
+use App\Data\TaskData;
 
 class TaskController extends Controller
 {
-    public function __construct(
-        private TaskService $taskService,
-    ) {}
-
     /**
      * Display a listing of the tasks.
      *
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $request->validate([
-            'status' => 'integer|in:0,1,2',
-            'sort_by' => 'string',
-            'sort_direction' => 'string|in:asc,desc',
-            'start_date' => 'date',
-            'end_date' => 'date|after_or_equal:start_date',
-        ]);
+        $tasks = Task::with('users')->filter()->sort()->get();
 
-        $filters = [
-            'status' => $request->input('status'),
-        ];
-
-        $sortBy = $request->input('sort_by');
-        $sortDirection = $request->input('sort_direction', 'asc');
-
-        $tasks = $this->taskService->getTasks($filters, $sortBy, $sortDirection);
-
-        return response()->json($tasks, 200);
+        return ApiResource::success(TaskResource::collection($tasks), 200);
     }
 
     /**
      * Store a newly created task in storage.
      *
      * @param Request $request
+     * @param TaskData $taskData
+     * @param StoreTaskRequest $storeTaskRequest
      * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, TaskData $taskData, StoreTaskRequest $storeTaskRequest): JsonResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        $validatedData = $storeTaskRequest->validated();
 
-        $task = Task::create([
-            'title' => $request->title,
-            'description' => $request->description,
-        ]);
+        $data = $taskData->from($validatedData);
 
-        // Задание на назначение свободного сотрудника через 5 минут (300 секунд)  
-        AssignTask::dispatch($task)->delay(now()->addMinutes(5));
+        $task = Task::create($data->toArray());
 
-        return response()->json(['task' => $task, 'message' => 'Задача успешно создана.'], 201);
+        return ApiResource::success(new TaskResource($task), 201);
     }
 
     /**
      * Update the specified task.
-     * 
+     *
      * @param Request $request
      * @param Task $task
+     * @param TaskData $taskData
+     * @param UpdateTaskRequest $updateTaskRequest
      * @return JsonResponse
      */
-    public function update(Request $request, Task $task): JsonResponse
+    public function update(Request $request, Task $task, TaskData $taskData, UpdateTaskRequest $updateTaskRequest): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'string',
-            'description' => 'string',
-            'status' => 'integer|in:0,1,2',
-        ]);
+        $validatedData = $updateTaskRequest->validated();
 
-        $oldStatus = $task->status;
+        $data = $taskData->from($validatedData);
 
-        $task->update($data);
+        $task->update($data->toArray());
 
-        $this->taskService->statusNotification($oldStatus, $task);
-
-        return response()->json($task, 200);
+        return ApiResource::success(new TaskResource($task), 200);
     }
 
     /**
@@ -98,38 +73,7 @@ class TaskController extends Controller
     public function destroy(Task $task): JsonResponse
     {
         $task->delete();
-        return response()->json(null, 200);
-    }
 
-    /**
-     * Assign a task to a user.
-     * 
-     * @param Request $request
-     * @param int $taskId
-     * @param int $userId
-     * @return JsonResponse
-     */
-    public function assign(Request $request, $taskId, $userId)
-    {
-        $task = Task::findOrFail($taskId);
-        $task->users()->attach($userId);
-
-        return response()->json($task->load('users'), 200);
-    }
-
-    /**
-     * Unassign a task from a user.
-     * 
-     * @param Request $request
-     * @param int $taskId
-     * @param int $userId
-     * @return JsonResponse
-     */
-    public function unassign(Request $request, $taskId, $userId)
-    {
-        $task = Task::findOrFail($taskId);
-        $task->users()->detach($userId);
-
-        return response()->json($task->load('users'), 200);
+        return ApiResource::success(null, 200);
     }
 }

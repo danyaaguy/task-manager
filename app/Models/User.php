@@ -3,28 +3,29 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\belongsToMany;
+use Abbasudo\Purity\Traits\Filterable;
+use Abbasudo\Purity\Traits\Sortable;
+use Spatie\ModelStates\HasStates;
+use App\States\User\UserState;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+
+class User extends Model
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable, Filterable, Sortable, HasStates, HasRoles;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
-        'password',
-        'status'
+        'password'
+    ];
+
+    protected $guarded = [
+        'state'
     ];
 
     /**
@@ -47,37 +48,17 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'state' => UserState::class,
         ];
     }
 
     /**
      * Get the tasks associated with the user.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class);
-    }
-
-    /**
-     * Get the roles associated with the user.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function roles(): HasMany
-    {
-        return $this->hasMany(Role::class);
-    }
-
-    /**
-     * Check if the user has a specific role.
      *
-     * @param string $roleName
-     * @return bool
+     * @return \Illuminate\Database\Eloquent\Relations\belongsToMany
      */
-    public function hasRole($roleName)
+    public function tasks(): belongsToMany
     {
-        return $this->roles()->where('name', $roleName)->exists();
+        return $this->belongsToMany(Task::class);
     }
 }

@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Преимущества:
+     * Теперь status более понятен для человека
+     */
+
+    /**
      * Run the migrations.
      */
     public function up(): void
@@ -15,7 +20,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description');
-            $table->integer('status')->default(0); // 0 - К выполнению, 1 - В работе, 2 - Выполнена
+            $table->string('state')->default('assigned');
             $table->timestamps();
         });
     }

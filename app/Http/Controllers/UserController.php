@@ -2,58 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\UserService;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use App\Http\Resources\UserResource;
+use App\Http\Resources\ApiResource;
+use App\Data\UserData;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 
 class UserController extends Controller
 {
-    public function __construct(
-        private UserService $userService,
-    ) {}
+    /**
+     * Преимущества:
+     * Теперь при тестировании контроллера не придётся мокировать или создавать заглушки
+     * Контроллер освобождается от логики валидации, фильтрации и сортировки.
+     * Правила валидации можно использовать в нескольких контроллерах.
+     */
 
     /**
      * Display a listing of the users.
      *
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $request->validate([
-            'status' => 'integer|in:0,1',
-            'sort_by' => 'string',
-            'sort_direction' => 'string|in:asc,desc',
-        ]);
+        $users = User::with(['tasks', 'roles'])->filter()->sort()->get();
 
-        $filters = [
-            'status' => $request->input('status'),
-        ];
-
-        $sortBy = $request->input('sort_by');
-        $sortDirection = $request->input('sort_direction', 'asc');
-
-        $users = $this->userService->getUsers($filters, $sortBy, $sortDirection);
-
-        return response()->json($users, 200);
+        return ApiResource::success(UserResource::collection($users), 200);
     }
 
     /**
      * Store a newly created user in storage.
      *
      * @param Request $request
+     * @param UserData $userData
+     * @param StoreUserRequest $storeUserRequest
      * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, UserData $userData, StoreUserRequest $storeUserRequest): JsonResponse
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:8',
-            'status' => 'integer|in:0,1',
-        ]);
-        $user = User::create($data);
-        return response()->json($user, 201);
+        $validatedData = $storeUserRequest->validated();
+
+        $data = $userData->from($validatedData);
+
+        $user = User::create($data->toArray());
+
+        return ApiResource::success(new UserResource($user), 201);
     }
 
     /**
@@ -61,18 +56,19 @@ class UserController extends Controller
      *
      * @param Request $request
      * @param User $user
+     * @param UserData $userData
+     * @param UpdateUserRequest $updateUserRequest
      * @return JsonResponse
      */
-    public function update(Request $request, User $user): JsonResponse
+    public function update(Request $request, User $user, UserData $userData, UpdateUserRequest $updateUserRequest): JsonResponse
     {
-        $data = $request->validate([
-            'name' => 'string',
-            'email' => 'email|unique:users',
-            'password' => 'string|min:8',
-            'status' => 'integer|in:0,1',
-        ]);
-        $user->update($data);
-        return response()->json($user, 200);
+        $validatedData = $updateUserRequest->validated();
+
+        $data = $userData->from($validatedData);
+
+        $user->update($data->toArray());
+
+        return ApiResource::success(new UserResource($user), 200);
     }
 
     /**
@@ -84,6 +80,7 @@ class UserController extends Controller
     public function destroy(User $user): JsonResponse
     {
         $user->delete();
-        return response()->json(null, 200);
+
+        return ApiResource::success(null, 200);
     }
 }
